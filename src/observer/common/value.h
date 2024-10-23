@@ -18,7 +18,7 @@ See the Mulan PSL v2 for more details. */
 #include "common/lang/memory.h"
 #include "common/type/attr_type.h"
 #include "common/type/data_type.h"
-
+using date = unsigned;
 /**
  * @brief 属性的值
  * @ingroup DataType
@@ -32,6 +32,7 @@ public:
   friend class DataType;
   friend class IntegerType;
   friend class FloatType;
+  friend class DateType;
   friend class BooleanType;
   friend class CharType;
 
@@ -43,6 +44,7 @@ public:
 
   explicit Value(int val);
   explicit Value(float val);
+  explicit Value(date val);
   explicit Value(bool val);
   explicit Value(const char *s, int len = 0);
 
@@ -106,12 +108,14 @@ public:
    */
   int    get_int() const;
   float  get_float() const;
+  date   get_date() const;
   string get_string() const;
   bool   get_boolean() const;
 
 private:
   void set_int(int val);
   void set_float(float val);
+  void set_date(date val);
   void set_string(const char *s, int len = 0);
   void set_string_from_other(const Value &other);
 
@@ -123,6 +127,7 @@ private:
   {
     int32_t int_value_;
     float   float_value_;
+    date    date_value_;
     bool    bool_value_;
     char   *pointer_value_;
   } value_ = {.int_value_ = 0};

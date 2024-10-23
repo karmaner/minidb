@@ -139,6 +139,14 @@ void Value::set_int(int val)
   length_           = sizeof(val);
 }
 
+void Value::set_date(date val)
+{
+  reset();
+  attr_type_        = AttrType::DATES;
+  value_.int_value_ = val;
+  length_           = sizeof(val);
+}
+
 void Value::set_float(float val)
 {
   reset();
@@ -183,6 +191,9 @@ void Value::set_value(const Value &value)
     } break;
     case AttrType::FLOATS: {
       set_float(value.get_float());
+    } break;
+    case AttrType::DATES: {
+      set_data(value.get_date());
     } break;
     case AttrType::CHARS: {
       set_string(value.get_string().c_str());
@@ -248,6 +259,9 @@ int Value::get_int() const
     case AttrType::FLOATS: {
       return (int)(value_.float_value_);
     }
+    case AttrType::DATES: {
+      return int(value_.date_value_);
+    }
     case AttrType::BOOLEANS: {
       return (int)(value_.bool_value_);
     }
@@ -276,8 +290,42 @@ float Value::get_float() const
     case AttrType::FLOATS: {
       return value_.float_value_;
     } break;
+    case AttrType::DATES: {
+      return float(value_.date_value_);
+    } break;
     case AttrType::BOOLEANS: {
       return float(value_.bool_value_);
+    } break;
+    default: {
+      LOG_WARN("unknown data type. type=%d", attr_type_);
+      return 0;
+    }
+  }
+  return 0;
+}
+
+date Value::get_date() const
+{
+  switch (attr_type_) {
+    case AttrType::CHARS: {
+      try {
+        return std::stoul(value_.pointer_value_);
+      } catch (exception const &ex) {
+        LOG_TRACE("failed to convert string to float. s=%s, ex=%s", value_.pointer_value_, ex.what());
+        return 0.0;
+      }
+    } break;
+    case AttrType::INTS: {
+      return date(value_.int_value_);
+    } break;
+    case AttrType::FLOATS: {
+      return date(value_.float_value_);
+    } break;
+    case AttrType::DATES: {
+      return value_.date_value_;
+    }
+    case AttrType::BOOLEANS: {
+      return date(value_.bool_value_);
     } break;
     default: {
       LOG_WARN("unknown data type. type=%d", attr_type_);
@@ -316,6 +364,9 @@ bool Value::get_boolean() const
     case AttrType::FLOATS: {
       float val = value_.float_value_;
       return val >= EPSILON || val <= -EPSILON;
+    } break;
+    case AttrType::DATES: {
+      return value_.date_value_ != 0;
     } break;
     case AttrType::BOOLEANS: {
       return value_.bool_value_;
