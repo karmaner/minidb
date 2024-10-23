@@ -39,14 +39,17 @@ while (0);
 #include "common/log/log.h"
 #include "yacc_sql.hpp"
 
+using date = unsigned;
+
 #ifndef register
 #define register 
 #endif // register
 
 extern int atoi();
 extern double atof();
+date str_to_date(char* str);
 
-#define RETURN_TOKEN(token) LOG_DEBUG("%s", #token);return token
+#define RETURN_TOKEN(token) LOG_INFO("%s", #token);return token
 %}
 
 /* Prevent the need for linking with -lfl */
@@ -110,6 +113,7 @@ ROLLBACK                                RETURN_TOKEN(TRX_ROLLBACK);
 INT                                     RETURN_TOKEN(INT_T);
 CHAR                                    RETURN_TOKEN(STRING_T);
 FLOAT                                   RETURN_TOKEN(FLOAT_T);
+DATE                                    RETURN_TOKEN(DATE_T);
 LOAD                                    RETURN_TOKEN(LOAD);
 DATA                                    RETURN_TOKEN(DATA);
 INFILE                                  RETURN_TOKEN(INFILE);
@@ -135,6 +139,9 @@ FORMAT                                  RETURN_TOKEN(FORMAT);
 "-" |
 "*" |
 "/"                                     { return yytext[0]; }
+
+{QUOTE}([0-9]{4}[-/](0?[1-9]|1[012])[-/](0?[1-9]|[12][0-9]|3[01])){QUOTE} yylval->dates = str_to_date(yytext); RETURN_TOKEN(DATE);
+
 \"[^"]*\"                               yylval->string = strdup(yytext); RETURN_TOKEN(SSS);
 '[^']*\'                                yylval->string = strdup(yytext); RETURN_TOKEN(SSS);
 
@@ -143,4 +150,45 @@ FORMAT                                  RETURN_TOKEN(FORMAT);
 
 void scan_string(const char *str, yyscan_t scanner) {
   yy_switch_to_buffer(yy_scan_string(str, scanner), scanner);
+}
+
+bool is_leap_year(int year) {
+    return (year % 4 == 0 && year % 100 != 0) || (year % 400 == 0);
+}
+
+bool is_valid(int year, int month, int day) {
+    if (month < 1 || month > 12 || day < 1) {
+        return false;
+    }
+    int days_in_month = 31;
+    switch (month) {
+        case 2:
+            days_in_month = is_leap_year(year) ? 29 : 28;
+            break;
+        case 4: case 6: case 9: case 11:
+            days_in_month = 30;
+            break;
+    }
+    return day <= days_in_month;
+}
+
+date str_to_date(char* str) {
+    unsigned year, month, day;
+    char delimiter1, delimiter2;
+
+    str[strlen(str) - 1] = '\0';
+
+    if (sscanf(str + 1, "%u%c%u%c%u", &year, &delimiter1, &month, &delimiter2, &day) != 5) {
+        return 19700101;
+    }
+
+    if (delimiter1 != delimiter2) {
+        return 19700101;
+    }
+
+    if (!is_valid(year, month, day)) {
+        return 19700101;
+    }
+
+    return year * 10000 + month * 100 + day;
 }
