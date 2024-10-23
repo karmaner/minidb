@@ -16,8 +16,22 @@ See the Mulan PSL v2 for more details. */
 #include <string.h>
 
 #include "common/lang/algorithm.h"
+using date = unsigned;
 
 namespace common {
+
+int compare_date(void *arg1, void *arg2)
+{
+  date v1 = *(date *)arg1;
+  date v2 = *(date *)arg2;
+  if (v1 > v2) {
+    return 1;
+  } else if (v1 < v2) {
+    return -1;
+  } else {
+    return 0;
+  }
+}
 
 int compare_int(void *arg1, void *arg2)
 {

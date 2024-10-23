@@ -24,6 +24,8 @@ Value::Value(int val) { set_int(val); }
 
 Value::Value(float val) { set_float(val); }
 
+Value::Value(date val) { set_date(val); }
+
 Value::Value(bool val) { set_boolean(val); }
 
 Value::Value(const char *s, int len /*= 0*/) { set_string(s, len); }
@@ -193,7 +195,7 @@ void Value::set_value(const Value &value)
       set_float(value.get_float());
     } break;
     case AttrType::DATES: {
-      set_data(value.get_date());
+      set_date(value.get_date());
     } break;
     case AttrType::CHARS: {
       set_string(value.get_string().c_str());
