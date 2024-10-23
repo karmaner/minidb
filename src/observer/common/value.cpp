@@ -123,6 +123,10 @@ void Value::set_data(char *data, int length)
       value_.float_value_ = *(float *)data;
       length_             = length;
     } break;
+    case AttrType::DATES: {
+      value_.date_value_ = *(date *)data;
+      length_             = length;
+    } break;
     case AttrType::BOOLEANS: {
       value_.bool_value_ = *(int *)data != 0;
       length_            = length;
