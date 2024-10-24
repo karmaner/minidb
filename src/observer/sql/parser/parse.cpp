@@ -29,10 +29,10 @@ void ParsedSqlResult::add_sql_node(std::unique_ptr<ParsedSqlNode> sql_node)
 
 ////////////////////////////////////////////////////////////////////////////////
 
-int sql_parse(const char *st, ParsedSqlResult *sql_result);
+int sql_parse(const char *st, ParsedSqlResult *sql_result, bool* validDate);
 
-RC parse(const char *st, ParsedSqlResult *sql_result)
+RC parse(const char *st, ParsedSqlResult *sql_result, bool* validDate)
 {
-  sql_parse(st, sql_result);
+  sql_parse(st, sql_result, validDate);
   return RC::SUCCESS;
 }

@@ -179,15 +179,15 @@ date str_to_date(char* str) {
     str[strlen(str) - 1] = '\0';
 
     if (sscanf(str + 1, "%u%c%u%c%u", &year, &delimiter1, &month, &delimiter2, &day) != 5) {
-        return 19700101;
+        return 0;
     }
 
     if (delimiter1 != delimiter2) {
-        return 19700101;
+        return 0;
     }
 
     if (!is_valid(year, month, day)) {
-        return 19700101;
+        return 0;
     }
 
     return year * 10000 + month * 100 + day;

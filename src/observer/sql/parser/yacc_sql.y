@@ -20,7 +20,7 @@ string token_name(const char *sql_string, YYLTYPE *llocp)
   return string(sql_string + llocp->first_column, llocp->last_column - llocp->first_column + 1);
 }
 
-int yyerror(YYLTYPE *llocp, const char *sql_string, ParsedSqlResult *sql_result, yyscan_t scanner, const char *msg)
+int yyerror(YYLTYPE *llocp, const char *sql_string, ParsedSqlResult *sql_result, yyscan_t scanner, bool* validDate ,const char *msg)
 {
   std::unique_ptr<ParsedSqlNode> error_sql_node = std::make_unique<ParsedSqlNode>(SCF_ERROR);
   error_sql_node->error.error_msg = msg;
@@ -62,6 +62,7 @@ UnboundAggregateExpr *create_aggregate_expression(const char *aggregate_name,
 %parse-param { const char * sql_string }
 %parse-param { ParsedSqlResult * sql_result }
 %parse-param { void * scanner }
+%parse-param { bool* validDate }
 
 //标识tokens
 %token  SEMICOLON
@@ -406,6 +407,9 @@ value:
       @$ = @1;
     }
     |DATE {
+      if($1 == 0) {
+        *validDate = false;
+      }
       $$ = new Value((date)$1);
       @$ = @1;
     }
@@ -710,11 +714,11 @@ opt_semicolon: /*empty*/
 //_____________________________________________________________________
 extern void scan_string(const char *str, yyscan_t scanner);
 
-int sql_parse(const char *s, ParsedSqlResult *sql_result) {
+int sql_parse(const char *s, ParsedSqlResult *sql_result, bool* validDate) {
   yyscan_t scanner;
   yylex_init(&scanner);
   scan_string(s, scanner);
-  int result = yyparse(s, sql_result, scanner);
+  int result = yyparse(s, sql_result, scanner, validDate);
   yylex_destroy(scanner);
   return result;
 }
