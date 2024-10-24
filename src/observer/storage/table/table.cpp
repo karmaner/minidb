@@ -52,6 +52,36 @@ Table::~Table()
   LOG_INFO("Table has been closed: %s", name());
 }
 
+RC Table::destory()
+{
+  RC rc = sync();
+  if(OB_FAIL(rc)) {
+    return rc;
+  }
+  string path = table_meta_file(base_dir_.c_str(), name());
+  if(!filesystem::remove(path.c_str())) {
+    LOG_ERROR("Failed to remove meta file=%s, errno=%d", path.c_str(), errno);
+    return RC::IOERR_CLOSE;
+  }
+  string data_file = table_data_file(base_dir_.c_str(), name());
+  if(!filesystem::remove(data_file.c_str())) {
+    LOG_ERROR("Failed to remove data file=%s, errno=%d", data_file.c_str(), errno);
+      return RC::IOERR_CLOSE;
+  }
+
+  for(int i = 0; i < table_meta_.index_num(); ++i) {
+    ((BplusTreeIndex*)indexes_[i])->close();
+    const IndexMeta* index_meta = table_meta_.index(i);
+    std::string index_file = table_index_file(base_dir_.c_str(), name(), index_meta->name());
+    if(!filesystem::remove(index_file.c_str())) {
+        LOG_ERROR("Failed to remove index file=%s, errno=%d", index_file.c_str(), errno);
+        return RC::IOERR_CLOSE;
+    }
+  }
+
+  return RC::SUCCESS;
+}
+
 RC Table::create(Db *db, int32_t table_id, const char *path, const char *name, const char *base_dir,
     span<const AttrInfoSqlNode> attributes, StorageFormat storage_format)
 {
@@ -65,7 +95,6 @@ RC Table::create(Db *db, int32_t table_id, const char *path, const char *name, c
     return RC::INVALID_ARGUMENT;
   }
   LOG_INFO("Begin to create table %s:%s", base_dir, name);
-
   if (attributes.size() == 0) {
     LOG_WARN("Invalid arguments. table_name=%s, attribute_count=%d", name, attributes.size());
     return RC::INVALID_ARGUMENT;
