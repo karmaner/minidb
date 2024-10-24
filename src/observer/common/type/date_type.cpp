@@ -18,7 +18,7 @@ int DateType::compare(const Value &left, const Value &right) const
 {
   ASSERT(left.attr_type() == AttrType::DATES, "left type is not dates");
   ASSERT(right.attr_type() == AttrType::DATES, "right type is not dates");
-    return common::compare_date((void *)&left, (void *)&right);
+  return common::compare_date((void *)&left.value_.date_value_, (void *)&right.value_.date_value_);
 }
 
 RC DateType::add(const Value &left, const Value &right, Value &result) const
