@@ -45,9 +45,8 @@ RC UpdateStmt::create(Db *db, const UpdateSqlNode &update, Stmt *&stmt)
     return rc;
   }
 
-  Value value = update.value;
 
-  stmt = new UpdateStmt(table, &value, 1, filter_stmt, const_cast<FieldMeta*>(field_meta));
+  stmt = new UpdateStmt(table, (Value *)&update.value, 1, filter_stmt, const_cast<FieldMeta*>(field_meta));
 
   return RC::SUCCESS;
 }
