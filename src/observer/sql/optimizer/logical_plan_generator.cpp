@@ -26,6 +26,7 @@ See the Mulan PSL v2 for more details. */
 #include "sql/operator/project_logical_operator.h"
 #include "sql/operator/table_get_logical_operator.h"
 #include "sql/operator/group_by_logical_operator.h"
+#include "sql/operator/update_logical_operator.h"
 
 #include "sql/stmt/calc_stmt.h"
 #include "sql/stmt/delete_stmt.h"
@@ -61,6 +62,12 @@ RC LogicalPlanGenerator::create(Stmt *stmt, unique_ptr<LogicalOperator> &logical
       InsertStmt *insert_stmt = static_cast<InsertStmt *>(stmt);
 
       rc = create_plan(insert_stmt, logical_operator);
+    } break;
+
+    case StmtType::UPDATE: {
+      UpdateStmt *update_stmt = static_cast<UpdateStmt *>(stmt);
+
+      rc = create_plan(update_stmt, logical_operator);
     } break;
 
     case StmtType::DELETE: {
@@ -238,11 +245,30 @@ RC LogicalPlanGenerator::create_plan(InsertStmt *insert_stmt, unique_ptr<Logical
 
 RC LogicalPlanGenerator::create_plan(UpdateStmt *update_stmt, unique_ptr<LogicalOperator>& logical_operator)
 {
-  // Table        *table = update_stmt->table();
-  // vector<Value> values(update_stmt->values(), update_stmt->values() + update_stmt->value_amount());
-  // FilterStmt   *filter_stmt = update_stmt->filter_stmt();
-  // UpdateLogicalOperator *update_operator = new UpdateLogicalOperator(table, values);
-  // logical_operator.reset(update_operator);
+  Table        *table = update_stmt->table();
+  Value        *value        = update_stmt->values();
+  FilterStmt   *filter_stmt = update_stmt->filter_stmt();
+  FieldMeta    *field_meta = update_stmt->field_meta();
+
+  unique_ptr<LogicalOperator> table_get_oper(new TableGetLogicalOperator(table, ReadWriteMode::READ_WRITE));
+
+  unique_ptr<LogicalOperator> predicate_oper;
+  RC                          rc = create_plan(filter_stmt, predicate_oper);
+  if (rc != RC::SUCCESS) {
+    return rc;
+  }
+  vector<Value> values = { *value };
+  vector<FieldMeta> fields = { *field_meta };
+  // 创建逻辑算子
+  unique_ptr<LogicalOperator> update_oper(new UpdateLogicalOperator(table, values, fields));
+  if (predicate_oper) {
+    predicate_oper->add_child(std::move(table_get_oper));
+    update_oper->add_child(std::move(predicate_oper));
+  } else {
+    update_oper->add_child(std::move(table_get_oper));
+  }
+
+  logical_operator = std::move(update_oper);
   return RC::SUCCESS;
 }
 

@@ -39,9 +39,15 @@ RC UpdateStmt::create(Db *db, const UpdateSqlNode &update, Stmt *&stmt)
   FilterStmt* filter_stmt = nullptr;
   RC rc = FilterStmt::create(db, table, &table_map, update.conditions.data(), static_cast<int>(update.conditions.size()), filter_stmt);
 
+  // 谓词语句合法检查
+  if (rc != RC::SUCCESS) {
+    LOG_WARN("failed to create filter statement. rc=%d:%s", rc, strrc(rc));
+    return rc;
+  }
+
   Value value = update.value;
 
   stmt = new UpdateStmt(table, &value, 1, filter_stmt, const_cast<FieldMeta*>(field_meta));
 
-  return rc;
+  return RC::SUCCESS;
 }
