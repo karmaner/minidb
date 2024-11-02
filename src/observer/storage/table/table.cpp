@@ -214,6 +214,24 @@ RC Table::open(Db *db, const char *meta_file, const char *base_dir)
   return rc;
 }
 
+RC Table::update_record(const Record &record)
+{
+  RC rc = RC::SUCCESS;
+  // rc = record_handler_->update_record()
+  return rc;
+}
+RC Table::update_record(const RID &rid)
+{
+  RC rc = RC::SUCCESS;
+  Record record;
+  rc = get_record(rid, record);
+  if(OB_FAIL(rc)) {
+    return rc;
+  }
+
+  return update_record(record);
+}
+
 RC Table::insert_record(Record &record)
 {
   RC rc = RC::SUCCESS;

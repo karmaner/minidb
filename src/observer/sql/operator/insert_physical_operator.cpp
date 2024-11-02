@@ -23,7 +23,7 @@ InsertPhysicalOperator::InsertPhysicalOperator(Table *table, vector<Value> &&val
     : table_(table), values_(std::move(values))
 {}
 
-RC InsertPhysicalOperator::open(Trx *trx)
+RC InsertPhysicalOperator::open(Trx *trx)     // 重构地区  多个数据 record
 {
   Record record;
   RC     rc = table_->make_record(static_cast<int>(values_.size()), values_.data(), record);

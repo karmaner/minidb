@@ -125,6 +125,12 @@ MvccTrx::MvccTrx(MvccTrxKit &kit, LogHandler &log_handler, int32_t trx_id)
 
 MvccTrx::~MvccTrx() {}
 
+RC MvccTrx::update_record(Table *table, Record &record)
+{
+
+  return RC::SUCCESS;
+}
+
 RC MvccTrx::insert_record(Table *table, Record &record)
 {
   Field begin_field;
