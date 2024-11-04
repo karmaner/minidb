@@ -34,7 +34,7 @@ RC UpdatePhysicalOperator::open(Trx *trx)
 	child->close();
 
 	for(Record& record : records_) {
-		rc = trx_->update_record(table_, record);
+		rc = trx_->update_record(table_, record, &fields_[0], &values_[0]);
 		if(rc != RC::SUCCESS) {
 			LOG_WARN("failed to update record: %s", strrc(rc));
 			return rc;

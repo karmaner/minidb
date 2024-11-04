@@ -214,13 +214,21 @@ RC Table::open(Db *db, const char *meta_file, const char *base_dir)
   return rc;
 }
 
-RC Table::update_record(const Record &record)
+RC Table::update_record(Record &record, const FieldMeta *FieldMeta, const Value* value)
 {
   RC rc = RC::SUCCESS;
-  // rc = record_handler_->update_record()
+  
+  rc = delete_entry_of_indexes(record.data(), record.rid(), false);
+  if(rc != RC::SUCCESS) {
+    LOG_ERROR("failed to update indexs on record rid=%d", record.rid());
+    return rc;
+  }
+
+  memcpy(record.data() + FieldMeta->offset(), value->data(), FieldMeta->len());
+
   return rc;
 }
-RC Table::update_record(const RID &rid)
+RC Table::update_record(const RID &rid, const FieldMeta *FieldMeta, const Value* value)
 {
   RC rc = RC::SUCCESS;
   Record record;
@@ -229,7 +237,7 @@ RC Table::update_record(const RID &rid)
     return rc;
   }
 
-  return update_record(record);
+  return update_record(record, FieldMeta, value);
 }
 
 RC Table::insert_record(Record &record)

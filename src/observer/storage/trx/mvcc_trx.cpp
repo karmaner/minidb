@@ -125,12 +125,6 @@ MvccTrx::MvccTrx(MvccTrxKit &kit, LogHandler &log_handler, int32_t trx_id)
 
 MvccTrx::~MvccTrx() {}
 
-RC MvccTrx::update_record(Table *table, Record &record)
-{
-
-  return RC::SUCCESS;
-}
-
 RC MvccTrx::insert_record(Table *table, Record &record)
 {
   Field begin_field;
@@ -189,6 +183,11 @@ RC MvccTrx::delete_record(Table *table, Record &record)
 
   operations_.push_back(Operation(Operation::Type::DELETE, table, record.rid()));
 
+  return RC::SUCCESS;
+}
+
+RC MvccTrx::update_record(Table *table, Record &Record,  FieldMeta *FieldMeta, const Value* value)
+{
   return RC::SUCCESS;
 }
 
