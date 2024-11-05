@@ -223,7 +223,11 @@ RC Table::update_record(Record &record, const FieldMeta *FieldMeta, const Value*
     return rc;
   }
 
-  memcpy(record.data() + FieldMeta->offset(), value->data(), value->length());
+  int copy_length = std::min(value->length(), FieldMeta->len());
+  memcpy(record.data() + FieldMeta->offset(), value->data(), copy_length);
+  if(copy_length < FieldMeta->len()) {
+    memset(record.data() + FieldMeta->offset() + copy_length, ' ', FieldMeta->len() - copy_length);
+  }
 
   rc = insert_entry_of_indexes(record.data(), record.rid());
   if (rc != RC::SUCCESS) {  // 可能出现了键值重复
