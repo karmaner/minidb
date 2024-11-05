@@ -379,6 +379,8 @@ public:
    */
   RC delete_record(const RID *rid);
 
+  RC update_record(const RID *rid, const char *data);
+
   /**
    * @brief 插入一个新的记录到指定文件中，并返回该记录的标识符
    *
