@@ -250,6 +250,10 @@ RC LogicalPlanGenerator::create_plan(UpdateStmt *update_stmt, unique_ptr<Logical
   FilterStmt   *filter_stmt = update_stmt->filter_stmt();
   FieldMeta    *field_meta = update_stmt->field_meta();
   // int count = update_stmt.value_amount();   // 以后会有的
+  if(value->attr_type() != field_meta->type()) {
+    LOG_ERROR("error update col value_type=%s, field_type=%s", attr_type_to_string(value->attr_type()), attr_type_to_string(field_meta->type()));
+    return RC::INVALID_ARGUMENT;
+  }
 
   unique_ptr<LogicalOperator> table_get_oper(new TableGetLogicalOperator(table, ReadWriteMode::READ_WRITE));
 
