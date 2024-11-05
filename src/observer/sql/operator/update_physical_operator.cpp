@@ -34,7 +34,7 @@ RC UpdatePhysicalOperator::open(Trx *trx)
 	child->close();
 
 	if(records_.size() <= 0) {
-		LOG_ERROR("none record to update field_name=%s", fields_[0].name());
+		LOG_ERROR("none record to update");
 		return RC::RECORD_NOT_EXIST;
 	}
 
