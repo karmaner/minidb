@@ -217,14 +217,27 @@ RC Table::open(Db *db, const char *meta_file, const char *base_dir)
 RC Table::update_record(Record &record, const FieldMeta *FieldMeta, const Value* value)
 {
   RC rc = RC::SUCCESS;
-  
   rc = delete_entry_of_indexes(record.data(), record.rid(), false);
   if(rc != RC::SUCCESS) {
     LOG_ERROR("failed to update indexs on record rid=%d", record.rid());
     return rc;
   }
 
-  memcpy(record.data() + FieldMeta->offset(), value->data(), FieldMeta->len());
+  memcpy(record.data() + FieldMeta->offset(), value->data(), value->length());
+
+  rc = insert_entry_of_indexes(record.data(), record.rid());
+  if (rc != RC::SUCCESS) {  // 可能出现了键值重复
+    RC rc2 = delete_entry_of_indexes(record.data(), record.rid(), false /*error_on_not_exists*/);
+    if (rc2 != RC::SUCCESS) {
+      LOG_ERROR("Failed to rollback index data when insert index entries failed. table name=%s, rc=%d:%s",
+                name(), rc2, strrc(rc2));
+    }
+    rc2 = record_handler_->delete_record(&record.rid());
+    if (rc2 != RC::SUCCESS) {
+      LOG_PANIC("Failed to rollback record data when insert index entries failed. table name=%s, rc=%d:%s",
+                name(), rc2, strrc(rc2));
+    }
+  }
 
   return rc;
 }

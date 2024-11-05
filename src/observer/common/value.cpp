@@ -317,7 +317,7 @@ date Value::get_date() const
       try {
         return std::stoul(value_.pointer_value_);
       } catch (exception const &ex) {
-        LOG_TRACE("failed to convert string to float. s=%s, ex=%s", value_.pointer_value_, ex.what());
+        LOG_TRACE("failed to convert string to date. s=%s, ex=%s", value_.pointer_value_, ex.what());
         return 0.0;
       }
     } break;
