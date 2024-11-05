@@ -217,6 +217,7 @@ RC Table::open(Db *db, const char *meta_file, const char *base_dir)
 RC Table::update_record(Record &record, const FieldMeta *FieldMeta, const Value* value)
 {
   RC rc = RC::SUCCESS;
+  this->get_record(record.rid(), record);
   rc = delete_entry_of_indexes(record.data(), record.rid(), false);
   if(rc != RC::SUCCESS) {
     LOG_ERROR("failed to update indexs on record rid=%d", record.rid());

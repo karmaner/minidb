@@ -49,20 +49,6 @@ RC UpdatePhysicalOperator::open(Trx *trx)
 	return RC::SUCCESS;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 RC UpdatePhysicalOperator::next()
 {
 	return RC::RECORD_EOF;
