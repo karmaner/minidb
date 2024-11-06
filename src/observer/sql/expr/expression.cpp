@@ -122,16 +122,24 @@ ComparisonExpr::~ComparisonExpr() {}
 bool match_pattern(const std::string& str, const std::string& pattern) {
     // 将 SQL 模式转换为正则表达式模式
     std::string regex_pattern = pattern;
-    size_t pos = regex_pattern.find('%');
-    while(pos != std::string::npos) {
-      regex_pattern.replace(pos, 1, ".*");
-      pos = regex_pattern.find('%', pos + 2);
-    }
-
-    pos = regex_pattern.find('_');
-    while (pos != std::string::npos) {
-        regex_pattern.replace(pos, 1, ".");
-        pos = regex_pattern.find('_', pos + 1);
+    for(auto c : pattern) {
+      switch(c) {
+      case '%':
+        regex_pattern += ".*";
+        break;
+      case '_':
+        regex_pattern += ".";
+        break;
+      case '.': case '^': case '$': case '*': case '+':
+      case '?': case '(': case ')': case '[': case ']':
+      case '{': case '}': case '|': case '\\':
+        regex_pattern += '\\';
+        regex_pattern += c;
+        break;
+      default:
+        regex_pattern += c;
+        break;
+      }
     }
     return std::regex_match(str, std::regex(regex_pattern));
 }
