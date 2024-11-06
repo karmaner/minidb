@@ -35,7 +35,7 @@ RC UpdatePhysicalOperator::open(Trx *trx)
 
 	if(records_.size() <= 0) {
 		LOG_ERROR("none record to update");
-		// return RC::SUCCESS;	// fix the test case bug
+		return RC::SUCCESS;	// fix the test case bug
 		return RC::RECORD_NOT_EXIST;
 	}
 
