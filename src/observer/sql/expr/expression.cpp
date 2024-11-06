@@ -15,6 +15,7 @@ See the Mulan PSL v2 for more details. */
 #include "sql/expr/expression.h"
 #include "sql/expr/tuple.h"
 #include "sql/expr/arithmetic_operator.hpp"
+#include <regex>
 
 using namespace std;
 
@@ -118,6 +119,23 @@ ComparisonExpr::ComparisonExpr(CompOp comp, unique_ptr<Expression> left, unique_
 
 ComparisonExpr::~ComparisonExpr() {}
 
+bool match_pattern(const std::string& str, const std::string& pattern) {
+    // 将 SQL 模式转换为正则表达式模式
+    std::string regex_pattern = pattern;
+    size_t pos = regex_pattern.find('%');
+    while(pos != std::string::npos) {
+      regex_pattern.replace(pos, 1, ".*");
+      pos = regex_pattern.find('%', pos + 2);
+    }
+
+    pos = regex_pattern.find('_');
+    while (pos != std::string::npos) {
+        regex_pattern.replace(pos, 1, ".");
+        pos = regex_pattern.find('_', pos + 1);
+    }
+    return std::regex_match(str, std::regex(regex_pattern));
+}
+
 RC ComparisonExpr::compare_value(const Value &left, const Value &right, bool &result) const
 {
   RC  rc         = RC::SUCCESS;
@@ -141,6 +159,9 @@ RC ComparisonExpr::compare_value(const Value &left, const Value &right, bool &re
     } break;
     case GREAT_THAN: {
       result = (cmp_result > 0);
+    } break;
+    case LIKE_OP: {
+      result = match_pattern(left.to_string(), right.to_string());
     } break;
     default: {
       LOG_WARN("unsupported comparison. %d", comp_);
