@@ -125,10 +125,10 @@ bool match_pattern(const std::string& str, const std::string& pattern) {
     for(auto c : pattern) {
       switch(c) {
       case '%':
-        regex_pattern += ".*";
+        regex_pattern += "[^']*";
         break;
       case '_':
-        regex_pattern += ".";
+        regex_pattern += "[^']";
         break;
       case '.': case '^': case '$': case '*': case '+':
       case '?': case '(': case ')': case '[': case ']':
@@ -147,7 +147,8 @@ bool match_pattern(const std::string& str, const std::string& pattern) {
 RC ComparisonExpr::compare_value(const Value &left, const Value &right, bool &result) const
 {
   RC  rc         = RC::SUCCESS;
-  int cmp_result = left.compare(right);
+  int cmp_result = false;
+  if(comp_ != LIKE_OP && comp_ != NOT_LIKE_OP) cmp_result = left.compare(right);
   result         = false;
   switch (comp_) {
     case EQUAL_TO: {
@@ -170,6 +171,9 @@ RC ComparisonExpr::compare_value(const Value &left, const Value &right, bool &re
     } break;
     case LIKE_OP: {
       result = match_pattern(left.to_string(), right.to_string());
+    } break;
+    case NOT_LIKE_OP: {
+      result = !match_pattern(left.to_string(), right.to_string());
     } break;
     default: {
       LOG_WARN("unsupported comparison. %d", comp_);
