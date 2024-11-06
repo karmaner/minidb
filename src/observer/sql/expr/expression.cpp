@@ -121,7 +121,7 @@ ComparisonExpr::~ComparisonExpr() {}
 
 bool match_pattern(const std::string& str, const std::string& pattern) {
     // 将 SQL 模式转换为正则表达式模式
-    std::string regex_pattern = pattern;
+    std::string regex_pattern = "";
     for(auto c : pattern) {
       switch(c) {
       case '%':
