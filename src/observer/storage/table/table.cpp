@@ -223,8 +223,11 @@ RC Table::update_record(Record &record, const FieldMeta *FieldMeta, const Value*
     LOG_ERROR("failed to update indexs on record rid=%d", record.rid());
     return rc;
   }
-
-  memcpy(record.data() + FieldMeta->offset(), value->data(), value->length());
+  int copy_len = std::min(value->length(), FieldMeta->len());
+  memcpy(record.data() + FieldMeta->offset(), value->data(), copy_len);
+  if(copy_len < FieldMeta->len()) {
+    memset(record.data() + FieldMeta->offset() + copy_len, '\0', FieldMeta->len() - copy_len);
+  }
   rc = record_handler_->update_record(&record.rid(), record.data());
 
   rc = insert_entry_of_indexes(record.data(), record.rid());
