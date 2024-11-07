@@ -15,6 +15,7 @@ See the Mulan PSL v2 for more details. */
 #include "sql/expr/expression.h"
 #include "sql/expr/tuple.h"
 #include "sql/expr/arithmetic_operator.hpp"
+#include <regex.h>
 
 using namespace std;
 
@@ -119,36 +120,34 @@ ComparisonExpr::ComparisonExpr(CompOp comp, unique_ptr<Expression> left, unique_
 ComparisonExpr::~ComparisonExpr() {}
 
 bool match_pattern(const std::string& str, const std::string& pattern) {
-    long unsigned int i = 0, j = 0;
-    long unsigned int star_pos = -1, match_pos = 0;
-
-    while (i < str.size()) {
-        if (j < pattern.size() && (pattern[j] == str[i] || pattern[j] == '_')) {
-            // 字符匹配或遇到 `_`（匹配单个字符）
-            i++;
-            j++;
-        } else if (j < pattern.size() && pattern[j] == '%') {
-            // `%` 代表任意多个字符
-            star_pos = j;
-            match_pos = i;
-            j++;
-        } else if (star_pos != -1) {
-            // 如果遇到过 `%`，回退并尝试匹配更多字符
-            j = star_pos + 1;
-            match_pos++;
-            i = match_pos;
+    char regex_pattern[1024] = "^";
+    
+    // 遍历模式字符串，转换为正则表达式
+    for (int i = 0; pattern[i] != '\0'; i++) {
+        if (pattern[i] == '%') {
+            strcat(regex_pattern, ".*");  // SQL 模式中的 % 转换为正则表达式中的 .* (任意多个字符)
+        } else if (pattern[i] == '_') {
+            strcat(regex_pattern, ".");  // SQL 模式中的 _ 转换为正则表达式中的 . (任意单个字符)
         } else {
-            // 否则匹配失败
-            return false;
+            strncat(regex_pattern, &pattern[i], 1);  // 普通字符，直接添加
         }
     }
+    strcat(regex_pattern, "$");  // 添加匹配字符串结尾
 
-    // 处理模式中的剩余字符
-    while (j < pattern.size() && pattern[j] == '%') {
-        j++;
+    // 编译正则表达式
+    regex_t regex;
+    int ret = regcomp(&regex, regex_pattern, REG_EXTENDED);
+    if (ret) {
+        fprintf(stderr, "Could not compile regex\n");
+        return false;
     }
 
-    return j == pattern.size();  // 如果模式完全匹配结束，则返回 true
+    // 执行正则匹配
+    ret = regexec(&regex, str.c_str(), 0, NULL, 0);
+    regfree(&regex);
+
+    // 返回匹配结果，0表示匹配成功，非0表示失败
+    return (ret == 0);
 }
 
 RC ComparisonExpr::compare_value(const Value &left, const Value &right, bool &result) const
