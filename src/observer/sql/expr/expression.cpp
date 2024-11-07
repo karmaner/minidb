@@ -15,7 +15,6 @@ See the Mulan PSL v2 for more details. */
 #include "sql/expr/expression.h"
 #include "sql/expr/tuple.h"
 #include "sql/expr/arithmetic_operator.hpp"
-#include <regex>
 
 using namespace std;
 
@@ -120,28 +119,36 @@ ComparisonExpr::ComparisonExpr(CompOp comp, unique_ptr<Expression> left, unique_
 ComparisonExpr::~ComparisonExpr() {}
 
 bool match_pattern(const std::string& str, const std::string& pattern) {
-    // 将 SQL 模式转换为正则表达式模式
-    std::string regex_pattern = "";
-    for(auto c : pattern) {
-      switch(c) {
-      case '%':
-        regex_pattern += "[^']*";
-        break;
-      case '_':
-        regex_pattern += "[^']";
-        break;
-      case '.': case '^': case '$': case '*': case '+':
-      case '?': case '(': case ')': case '[': case ']':
-      case '{': case '}': case '|': case '\\':
-        regex_pattern += '\\';
-        regex_pattern += c;
-        break;
-      default:
-        regex_pattern += c;
-        break;
-      }
+    long unsigned int i = 0, j = 0;
+    long unsigned int star_pos = -1, match_pos = 0;
+
+    while (i < str.size()) {
+        if (j < pattern.size() && (pattern[j] == str[i] || pattern[j] == '_')) {
+            // 字符匹配或遇到 `_`（匹配单个字符）
+            i++;
+            j++;
+        } else if (j < pattern.size() && pattern[j] == '%') {
+            // `%` 代表任意多个字符
+            star_pos = j;
+            match_pos = i;
+            j++;
+        } else if (star_pos != -1) {
+            // 如果遇到过 `%`，回退并尝试匹配更多字符
+            j = star_pos + 1;
+            match_pos++;
+            i = match_pos;
+        } else {
+            // 否则匹配失败
+            return false;
+        }
     }
-    return std::regex_match(str, std::regex(regex_pattern));
+
+    // 处理模式中的剩余字符
+    while (j < pattern.size() && pattern[j] == '%') {
+        j++;
+    }
+
+    return j == pattern.size();  // 如果模式完全匹配结束，则返回 true
 }
 
 RC ComparisonExpr::compare_value(const Value &left, const Value &right, bool &result) const
