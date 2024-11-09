@@ -99,6 +99,8 @@ UnboundAggregateExpr *create_aggregate_expression(const char *aggregate_name,
         FROM
         NOT
         LIKE
+        INNER
+        JOIN
         WHERE
         AND
         SET
@@ -120,6 +122,7 @@ UnboundAggregateExpr *create_aggregate_expression(const char *aggregate_name,
 %union {
   ParsedSqlNode *                            sql_node;
   ConditionSqlNode *                         condition;
+  JoinSqlNode *                              join_sql_node;
   Value *                                    value;
   enum CompOp                                comp;
   RelAttrSqlNode *                           rel_attr;
@@ -157,6 +160,7 @@ UnboundAggregateExpr *create_aggregate_expression(const char *aggregate_name,
 %type <value_list>          value_list
 %type <condition_list>      where
 %type <condition_list>      condition_list
+%type <join_sql_node>       join_list
 %type <string>              storage_format
 %type <relation_list>       rel_list
 %type <expression>          expression
@@ -461,7 +465,7 @@ update_stmt:      /*  update 语句的语法解析树*/
     }
     ;
 select_stmt:        /*  select 语句的语法解析树*/
-    SELECT expression_list FROM rel_list where group_by
+    SELECT expression_list FROM rel_list join_list where group_by
     {
       $$ = new ParsedSqlNode(SCF_SELECT);
       if ($2 != nullptr) {
@@ -474,14 +478,20 @@ select_stmt:        /*  select 语句的语法解析树*/
         delete $4;
       }
 
-      if ($5 != nullptr) {
-        $$->selection.conditions.swap(*$5);
-        delete $5;
+      if ($6 != nullptr) {
+        $$->selection.conditions.swap(*$6);
+        delete $6;
       }
 
-      if ($6 != nullptr) {
-        $$->selection.group_by.swap(*$6);
-        delete $6;
+      if ($7 != nullptr) {
+        $$->selection.group_by.swap(*$7);
+        delete $7;
+      }
+
+      if ($5 != nullptr) {
+        $$->selection.relations.insert($$->selection.relations.end(), $5->relations.begin(), $5->relations.end());
+        $$->selection.conditions.insert($$->selection.conditions.end(), $5->conditions.begin(), $5->conditions.end());
+        delete $5;
       }
     }
     ;
@@ -585,6 +595,31 @@ rel_list:
     }
     ;
 
+join_list:
+    {
+      $$ = nullptr;
+    }
+    | INNER join_list {
+      $$ = $2;
+    }
+    | JOIN ID ON condition_list join_list {
+      $$ = new JoinSqlNode();
+
+      if ($4 != nullptr) {
+        $$->conditions.swap(*$4);
+        delete $4;
+      }
+
+      $$->relations.push_back($2);
+      free($2);
+
+      if ($5 != nullptr) {
+        $$->relations.insert($$->relations.end(), $5->relations.begin(), $5->relations.end());
+        $$->conditions.insert($$->conditions.end(), $5->conditions.begin(), $5->conditions.end());
+        delete $5;
+      }
+    }
+    ;
 where:
     /* empty */
     {
