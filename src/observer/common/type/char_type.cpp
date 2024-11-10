@@ -27,15 +27,35 @@ RC CharType::set_value_from_str(Value &val, const string &data) const
 
 RC CharType::cast_to(const Value &val, AttrType type, Value &result) const
 {
+  RC rc = RC::SUCCESS;
   switch (type) {
-    default: return RC::UNIMPLEMENTED;
+    case AttrType::BOOLEANS :{
+      result.set_boolean(bool(val.get_date() == 0));
+      return rc;
+    } break;
+    case AttrType::DATES :{
+      result.set_date(date(val.get_date()));
+      return rc;
+    } break;
+    case AttrType::FLOATS :{
+      result.set_float(val.get_float());
+      return rc;
+    } break;
+    case AttrType::INTS :{
+      result.set_int(val.get_date());
+      return rc;
+    } break;
+    default: {
+      LOG_WARN("undefine cast_to type type=", attr_type_to_string(type));
+      return RC::UNIMPLEMENTED;
+    }
   }
   return RC::SUCCESS;
 }
 
 int CharType::cast_cost(AttrType type)
 {
-  if (type == AttrType::CHARS) {
+  if (type != AttrType::CHARS) {
     return 0;
   }
   return INT32_MAX;
