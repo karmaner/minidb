@@ -16,8 +16,11 @@ See the Mulan PSL v2 for more details. */
 
 int DateType::compare(const Value &left, const Value &right) const
 {
-  ASSERT(left.attr_type() == AttrType::DATES, "left type is not dates");
-  ASSERT(right.attr_type() == AttrType::DATES, "right type is not dates");
+  if(left.attr_type() == AttrType::CHARS || right.attr_type() == AttrType::CHARS) {
+    string left_val = left.get_string();
+    string right_val = right.get_string();
+    return common::compare_string((void *)&left_val, left.length_, (void *)&right_val, right.length_);
+  }
   return common::compare_date((void *)&left.value_.date_value_, (void *)&right.value_.date_value_);
 }
 
