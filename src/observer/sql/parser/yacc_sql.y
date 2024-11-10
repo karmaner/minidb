@@ -92,6 +92,7 @@ UnboundAggregateExpr *create_aggregate_expression(const char *aggregate_name,
         FLOAT_T
         DATE_T
         NULL_T
+        NULLABLE
         HELP
         EXIT
         DOT //QUOTE
@@ -139,6 +140,7 @@ UnboundAggregateExpr *create_aggregate_expression(const char *aggregate_name,
   int                                        number;
   float                                      floats;
   date                                       dates;
+  bool                                       bools;
 }
 
 %token <number> NUMBER
@@ -153,6 +155,7 @@ UnboundAggregateExpr *create_aggregate_expression(const char *aggregate_name,
 %type <condition>           condition
 %type <value>               value
 %type <number>              number
+%type <bools>               nullable
 %type <string>              relation
 %type <comp>                comp_op
 %type <rel_attr>            rel_attr
@@ -345,42 +348,37 @@ attr_def_list:
       delete $2;
     }
     ;
-    
+nullable:
+    {
+      $$ = true;
+    }
+    | NOT NULL_T {
+      $$ = true;
+    }
+    | NULL_T {
+      $$ = true;
+    }
+    | NULLABLE {
+      $$ = true;
+    }
+    ;
 attr_def:
-    ID type LBRACE number RBRACE 
+    ID type LBRACE number RBRACE nullable
     {
       $$ = new AttrInfoSqlNode;
       $$->type = (AttrType)$2;
       $$->name = $1;
       $$->length = $4;
-      $$->nullable = false;
+      $$->nullable = $6;
       free($1);
     }
-    | ID type
+    | ID type nullable
     {
-      $$ = new AttrInfoSqlNode;
+      $$ = new AttrInfoSqlNode; 
       $$->type = (AttrType)$2;
       $$->name = $1;
       $$->length = 4;
-      $$->nullable = false;
-      free($1);
-    }
-    | ID type LBRACE number RBRACE NULL_T
-    {
-      $$ = new AttrInfoSqlNode;
-      $$->type = (AttrType)$2;
-      $$->name = $1;
-      $$->length = $4;
-      $$->nullable = false;
-      free($1);
-    }
-    | ID type LBRACE number RBRACE NOT NULL_T
-    {
-      $$ = new AttrInfoSqlNode;
-      $$->type = (AttrType)$2;
-      $$->name = $1;
-      $$->length = $4;
-      $$->nullable = true;
+      $$->nullable = $3;
       free($1);
     }
     ;
@@ -564,7 +562,8 @@ expression:
     }
     | value {
       if ($1->is_null()) {
-        yyerror(&@$, sql_string, sql_result, scanner, "NULL Cound Not In Expression Now!")
+        bool parser_ok = false;
+        yyerror(&@$, sql_string, sql_result, scanner, &parser_ok, "NULL Cound Not In Expression Now!");
         YYERROR;
       }
       $$ = new ValueExpr(*$1);
