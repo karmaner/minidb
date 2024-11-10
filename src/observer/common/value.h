@@ -33,6 +33,7 @@ public:
   friend class IntegerType;
   friend class FloatType;
   friend class DateType;
+  friend class NullType;
   friend class BooleanType;
   friend class CharType;
 
@@ -91,6 +92,8 @@ public:
   void set_data(const char *data, int length) { this->set_data(const_cast<char *>(data), length); }
   void set_value(const Value &value);
   void set_boolean(bool val);
+  void set_null();
+  bool is_null() const;
 
   string to_string() const;
 

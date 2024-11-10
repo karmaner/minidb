@@ -91,6 +91,7 @@ UnboundAggregateExpr *create_aggregate_expression(const char *aggregate_name,
         STRING_T
         FLOAT_T
         DATE_T
+        NULL_T
         HELP
         EXIT
         DOT //QUOTE
@@ -352,6 +353,7 @@ attr_def:
       $$->type = (AttrType)$2;
       $$->name = $1;
       $$->length = $4;
+      $$->nullable = false;
       free($1);
     }
     | ID type
@@ -360,6 +362,25 @@ attr_def:
       $$->type = (AttrType)$2;
       $$->name = $1;
       $$->length = 4;
+      $$->nullable = false;
+      free($1);
+    }
+    | ID type LBRACE number RBRACE NULL_T
+    {
+      $$ = new AttrInfoSqlNode;
+      $$->type = (AttrType)$2;
+      $$->name = $1;
+      $$->length = $4;
+      $$->nullable = false;
+      free($1);
+    }
+    | ID type LBRACE number RBRACE NOT NULL_T
+    {
+      $$ = new AttrInfoSqlNode;
+      $$->type = (AttrType)$2;
+      $$->name = $1;
+      $$->length = $4;
+      $$->nullable = true;
       free($1);
     }
     ;
@@ -371,6 +392,7 @@ type:
     | STRING_T { $$ = static_cast<int>(AttrType::CHARS); }
     | FLOAT_T  { $$ = static_cast<int>(AttrType::FLOATS); }
     | DATE_T  { $$ = static_cast<int>(AttrType::DATES); }
+    | NULL_T { $$ = static_cast<int>(AttrType::NULLS); }
     ;
 insert_stmt:        /*insert   语句的语法解析树*/
     INSERT INTO ID VALUES LBRACE value value_list RBRACE 
@@ -541,6 +563,10 @@ expression:
       $$ = create_arithmetic_expression(ArithmeticExpr::Type::NEGATIVE, $2, nullptr, sql_string, &@$);
     }
     | value {
+      if ($1->is_null()) {
+        yyerror(&@$, sql_string, sql_result, scanner, "NULL Cound Not In Expression Now!")
+        YYERROR;
+      }
       $$ = new ValueExpr(*$1);
       $$->set_name(token_name(sql_string, &@$));
       delete $1;

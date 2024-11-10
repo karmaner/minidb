@@ -153,7 +153,11 @@ bool match_pattern(const std::string& str, const std::string& pattern) {
 RC ComparisonExpr::compare_value(const Value &left, const Value &right, bool &result) const
 {
   RC  rc         = RC::SUCCESS;
-  int cmp_result = false;
+  if (left.is_null() || right.is_null()) {
+    result = false;
+    return rc;
+  }
+  int cmp_result = 0;
   if(comp_ != LIKE_OP && comp_ != NOT_LIKE_OP) cmp_result = left.compare(right);
   result         = false;
   switch (comp_) {
