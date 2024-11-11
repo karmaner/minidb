@@ -2842,6 +2842,7 @@ bool is_leap_year(int year) {
 }
 
 bool is_valid(int year, int month, int day) {
+    if (year <= 0) return false;
     if (month < 1 || month > 12 || day < 1) {
         return false;
     }
