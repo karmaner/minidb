@@ -29,14 +29,21 @@ RC CharType::cast_to(const Value &val, AttrType type, Value &result) const
 {
   string str = val.get_string();
   string ans = "0";
+  bool is_float = false;
   for(auto c : str) {
     if (c >= '0' && c <= '9') {
       ans += c;
+    } else if (c == '.') {
+      ans += '.';
+      is_float = true;
     } else {
       break;
     }
   }
-  result.set_int(std::stoi(ans));
+  if (is_float)
+    result.set_float(std::stof(ans));
+  else
+    result.set_int(std::stoi(ans));
   result.set_type(type);
   return RC::SUCCESS;
 }
