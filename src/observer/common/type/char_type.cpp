@@ -27,11 +27,18 @@ RC CharType::set_value_from_str(Value &val, const string &data) const
 
 RC CharType::cast_to(const Value &val, AttrType type, Value &result) const
 {
-  RC rc = RC::SUCCESS;
-  Value new_value(val);
-  new_value.set_type(type);
-  result = std::move(new_value);
-  return rc;
+  string str = val.get_string();
+  string ans = "0";
+  for(auto c : str) {
+    if (c >= '0' && c <= '9') {
+      ans += c;
+    } else {
+      break;
+    }
+  }
+  result.set_int(std::stoi(ans));
+  result.set_type(type);
+  return RC::SUCCESS;
 }
 
 int CharType::cast_cost(AttrType type)
