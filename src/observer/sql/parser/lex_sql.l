@@ -146,7 +146,7 @@ FORMAT                                  RETURN_TOKEN(FORMAT);
 "*" |
 "/"                                     { return yytext[0]; }
 
-{QUOTE}([0-9]{4}[-/](0?[1-9]2)[-/](0?[1-9]|[12][0-9]|3[01])){QUOTE} yylval->dates = str_to_date(yytext); RETURN_TOKEN(DATE);
+{QUOTE}([0-9]{1,4}[-/]([0-9]2)[-/]([0-9]2)){QUOTE} yylval->dates = str_to_date(yytext); RETURN_TOKEN(DATE);
 
 \"[^"]*\"                               yylval->string = strdup(yytext); RETURN_TOKEN(SSS);
 '[^']*\'                                yylval->string = strdup(yytext); RETURN_TOKEN(SSS);
