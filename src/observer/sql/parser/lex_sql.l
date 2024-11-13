@@ -108,7 +108,7 @@ AND                                     RETURN_TOKEN(AND);
 INSERT                                  RETURN_TOKEN(INSERT);
 INTO                                    RETURN_TOKEN(INTO);
 VALUES                                  RETURN_TOKEN(VALUES);
-DELETE                                  RETURN_TOKEN(DELETE);
+DELETE                                  RETURN_TOKEN(DELETE); 
 UPDATE                                  RETURN_TOKEN(UPDATE);
 SET                                     RETURN_TOKEN(SET);
 BEGIN                                   RETURN_TOKEN(TRX_BEGIN);
@@ -146,7 +146,7 @@ FORMAT                                  RETURN_TOKEN(FORMAT);
 "*" |
 "/"                                     { return yytext[0]; }
 
-{QUOTE}([0-9]{1,4}[-/]([0-9]2)[-/]([0-9]2)){QUOTE} yylval->dates = str_to_date(yytext); RETURN_TOKEN(DATE);
+{QUOTE}([0-9]{1,4}[-/]([0-9]{2})[-/]([0-9]{2})){QUOTE} yylval->dates = str_to_date(yytext); RETURN_TOKEN(DATE);
 
 \"[^"]*\"                               yylval->string = strdup(yytext); RETURN_TOKEN(SSS);
 '[^']*\'                                yylval->string = strdup(yytext); RETURN_TOKEN(SSS);
