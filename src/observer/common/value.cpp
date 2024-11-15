@@ -131,6 +131,9 @@ void Value::set_data(char *data, int length)
       value_.bool_value_ = *(int *)data != 0;
       length_            = length;
     } break;
+    case AttrType::NULLS: {
+      length_ = 0;
+    }
     default: {
       LOG_WARN("unknown data type: %d", attr_type_);
     } break;

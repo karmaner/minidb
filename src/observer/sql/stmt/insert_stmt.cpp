@@ -17,9 +17,13 @@ See the Mulan PSL v2 for more details. */
 #include "storage/db/db.h"
 #include "storage/table/table.h"
 
-InsertStmt::InsertStmt(Table *table, const std::vector<Value>* values, int value_group_amount, int value_amount)
-    : table_(table), values_(values), value_group_ammout_(value_group_amount), value_amount_(value_amount)
-{}
+InsertStmt::InsertStmt(Table *table, 
+      const std::vector<Value>* values, 
+      int value_group_amount, int value_amount)
+    : table_(table), values_(values)
+    , value_group_ammout_(value_group_amount)
+    , value_amount_(value_amount) {
+    }
 
 RC InsertStmt::create(Db *db, const InsertSqlNode &inserts, Stmt *&stmt)
 {

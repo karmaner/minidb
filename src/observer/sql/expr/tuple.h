@@ -185,6 +185,12 @@ public:
     }
   }
 
+  void set_null_bit(TableMeta& table_meta)
+  {
+      null_bit_ = table_meta.null_bit();
+  }
+
+
   int cell_num() const override { return speces_.size(); }
 
   RC cell_at(int index, Value &cell) const override
@@ -196,7 +202,11 @@ public:
 
     FieldExpr       *field_expr = speces_[index];
     const FieldMeta *field_meta = field_expr->field().meta();
-    cell.set_type(field_meta->type());
+    auto type = field_meta->type();
+    if (is_null(index)) {
+      type = AttrType::NULLS;
+    }
+    cell.set_type(type);
     cell.set_data(this->record_->data() + field_meta->offset(), field_meta->len());
     return RC::SUCCESS;
   }
@@ -242,9 +252,12 @@ public:
 
   const Record &record() const { return *record_; }
 
+  bool is_null(int index) const { return null_bit_->get_bit(index); }
+
 private:
   Record                  *record_ = nullptr;
   const Table             *table_  = nullptr;
+  common::Bitmap    *null_bit_ = nullptr;
   std::vector<FieldExpr *> speces_;
 };
 

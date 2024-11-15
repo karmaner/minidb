@@ -33,6 +33,9 @@ public:
   int next_unsetted_bit(int start);
   int next_setted_bit(int start);
 
+  char* data() const { return bitmap_; }
+  int size() const { return size_; }
+
 private:
   char *bitmap_;
   int   size_;

@@ -23,6 +23,7 @@ See the Mulan PSL v2 for more details. */
 #include "common/types.h"
 #include "storage/field/field_meta.h"
 #include "storage/index/index_meta.h"
+#include "common/lang/bitmap.h"
 
 /**
  * @brief 表元数据
@@ -52,6 +53,7 @@ public:
   const FieldMeta    *find_field_by_offset(int offset) const;
   auto                field_metas() const -> const std::vector<FieldMeta>                *{ return &fields_; }
   auto                trx_fields() const -> std::span<const FieldMeta>;
+  auto                null_bit() { return &null_bit_; }
   const StorageFormat storage_format() const { return storage_format_; }
 
   int field_num() const;  // sys field included
@@ -61,8 +63,9 @@ public:
   const IndexMeta *find_index_by_field(const char *field) const;
   const IndexMeta *index(int i) const;
   int              index_num() const;
-
   int record_size() const;
+  int data_size() const;
+  int null_bit_size() const;
 
 public:
   int  serialize(std::ostream &os) const override;
@@ -70,7 +73,7 @@ public:
   int  get_serial_size() const override;
   void to_string(std::string &output) const override;
   void desc(std::ostream &os) const;
-
+  common::Bitmap         null_bit_; // 标识是否为null值
 protected:
   int32_t                table_id_ = -1;
   std::string            name_;

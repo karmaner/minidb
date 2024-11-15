@@ -92,7 +92,7 @@ public:
   void set_data(const char *data, int length) { this->set_data(const_cast<char *>(data), length); }
   void set_value(const Value &value);
   void set_boolean(bool val);
-  void set_null();
+  
   bool is_null() const;
 
   string to_string() const;
@@ -119,6 +119,7 @@ private:
   void set_int(int val);
   void set_float(float val);
   void set_date(date val);
+  void set_null();
   void set_string(const char *s, int len = 0);
   void set_string_from_other(const Value &other);
 

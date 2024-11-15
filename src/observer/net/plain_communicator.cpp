@@ -297,9 +297,10 @@ RC PlainCommunicator::write_tuple_result(SqlResult *sql_result)
         sql_result->close();
         return rc;
       }
-
       string cell_str = value.to_string();
-
+      if (value.is_null()) {
+        cell_str = "null";
+      }
       rc = writer_->writen(cell_str.data(), cell_str.size());
       if (OB_FAIL(rc)) {
         LOG_WARN("failed to send data to client. err=%s", strerror(errno));

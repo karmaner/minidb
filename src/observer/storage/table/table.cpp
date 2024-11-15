@@ -342,11 +342,22 @@ RC Table::make_record(int value_num, const Value *values, Record &record)
   int   record_size = table_meta_.record_size();
   char *record_data = (char *)malloc(record_size);
   memset(record_data, 0, record_size);
+  int num_bytes = (table_meta_.field_num() + 7) / 8;
+  std::string init_data(num_bytes, '0');
+  table_meta_.null_bit()->init(const_cast<char*>(init_data.c_str()), table_meta_.field_num());
 
   for (int i = 0; i < value_num && OB_SUCC(rc); i++) {
     const FieldMeta *field = table_meta_.field(i + normal_field_start_index);
     const Value &    value = values[i];
-    if (field->type() != value.attr_type()) {
+    if (value.attr_type() == AttrType::NULLS) {
+      if (field->nullable()) {
+        table_meta_.null_bit()->set_bit(i);
+      } else {
+        LOG_WARN("col is not null col_name=%s", field->name());
+        return RC::SCHEMA_NOT_NULLABLE;
+      }
+    }
+    if (field->type() != value.attr_type() && value.attr_type() != AttrType::NULLS) {
       Value real_value;
       rc = Value::cast_to(value, field->type(), real_value);
       if (OB_FAIL(rc)) {
@@ -359,6 +370,8 @@ RC Table::make_record(int value_num, const Value *values, Record &record)
       rc = set_value_to_record(record_data, value, field);
     }
   }
+  // null bit 存入record
+  memcpy(record_data + table_meta_.data_size(), table_meta_.null_bit_.data(), num_bytes);  // 存储null bitmap
   if (OB_FAIL(rc)) {
     LOG_WARN("failed to make record. table name:%s", table_meta_.name());
     free(record_data);
@@ -377,6 +390,9 @@ RC Table::set_value_to_record(char *record_data, const Value &value, const Field
     if (copy_len > data_len) {
       copy_len = data_len + 1;
     }
+  }
+  if (value.attr_type() == AttrType::NULLS) {
+    copy_len = 0;
   }
   memcpy(record_data + field->offset(), value.data(), copy_len);
   return RC::SUCCESS;

@@ -22,6 +22,8 @@ RC TableScanPhysicalOperator::open(Trx *trx)
 {
   RC rc = table_->get_record_scanner(record_scanner_, trx, mode_);
   if (rc == RC::SUCCESS) {
+    TableMeta table_meta = table_->table_meta();
+    tuple_.set_null_bit(table_meta);
     tuple_.set_schema(table_, table_->table_meta().field_metas());
   }
   trx_ = trx;

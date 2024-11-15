@@ -27,8 +27,8 @@ RC InsertPhysicalOperator::open(Trx *trx)     // 重构地区  多个数据 reco
 {
     Record record;
     RC rc = RC::SUCCESS;
-    for(int i = 0; i < static_cast<int>(values_.size()); ++i) {
-    rc = table_->make_record(static_cast<int>(values_[i].size()), values_[i].data(), record);
+    for(auto& value : values_) {
+    rc = table_->make_record(static_cast<int>(value.size()), value.data(), record);
     if (rc != RC::SUCCESS) {
       LOG_WARN("failed to make record. rc=%s", strrc(rc));
       return rc;

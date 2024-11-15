@@ -20,6 +20,9 @@ See the Mulan PSL v2 for more details. */
 #include "storage/trx/trx.h"
 #include "json/json.h"
 
+/**
+ * 描述了一个表的结构 fields表示表行 indexes表示表索引
+ */
 static const Json::StaticString FIELD_TABLE_ID("table_id");
 static const Json::StaticString FIELD_TABLE_NAME("table_name");
 static const Json::StaticString FIELD_STORAGE_FORMAT("storage_format");
@@ -33,7 +36,9 @@ TableMeta::TableMeta(const TableMeta &other)
       indexes_(other.indexes_),
       storage_format_(other.storage_format_),
       record_size_(other.record_size_)
-{}
+{
+  
+}
 
 void TableMeta::swap(TableMeta &other) noexcept
 {
@@ -67,7 +72,8 @@ RC TableMeta::init(int32_t table_id, const char *name, const std::vector<FieldMe
     fields_.resize(attributes.size() + trx_fields->size());
     for (size_t i = 0; i < trx_fields->size(); i++) {
       const FieldMeta &field_meta = (*trx_fields)[i];
-      fields_[i] = FieldMeta(field_meta.name(), field_meta.type(), field_offset, field_meta.len(), false /*visible*/, field_meta.field_id());
+      fields_[i] = FieldMeta(field_meta.name(), field_meta.type(), field_offset, field_meta.len(), 
+                  false /*visible*/, field_meta.field_id(), field_meta.nullable());
       field_offset += field_meta.len();
     }
 
@@ -75,17 +81,20 @@ RC TableMeta::init(int32_t table_id, const char *name, const std::vector<FieldMe
   } else {
     fields_.resize(attributes.size());
   }
-
+  string null_data((attributes.size() + 7 / 8), '0');
+  null_bit_.init(const_cast<char*>(null_data.c_str()), attributes.size());
   for (size_t i = 0; i < attributes.size(); i++) {
     const AttrInfoSqlNode &attr_info = attributes[i];
     // `i` is the col_id of fields[i]
     rc = fields_[i + trx_field_num].init(
-      attr_info.name.c_str(), attr_info.type, field_offset, attr_info.length, true /*visible*/, i);
+      attr_info.name.c_str(), attr_info.type, field_offset, attr_info.length, 
+                        true /*visible*/, i, attr_info.nullable);
     if (OB_FAIL(rc)) {
-      LOG_ERROR("Failed to init field meta. table name=%s, field name: %s", name, attr_info.name.c_str());
+      LOG_ERROR("Failed to init field meta. table name=%s, field name: %s", name, 
+                                                          attr_info.name.c_str());
       return rc;
     }
-
+    null_bit_.set_bit(i);
     field_offset += attr_info.length;
   }
 
@@ -164,7 +173,11 @@ const IndexMeta *TableMeta::index(int i) const { return &indexes_[i]; }
 
 int TableMeta::index_num() const { return indexes_.size(); }
 
-int TableMeta::record_size() const { return record_size_; }
+int TableMeta::record_size() const { return  data_size() + null_bit_size(); }
+
+int TableMeta::data_size() const { return record_size_; }
+
+int TableMeta::null_bit_size() const { return ((null_bit_.size() + 7) / 8); }
 
 int TableMeta::serialize(std::ostream &ss) const
 {
